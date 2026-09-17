@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FixMate — Reliable help, right when you need it</title>
+  <meta name="description" content="FixMate connects customers with trusted home maintenance professionals.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">🔧</span><span>FixMate</span></div>
+    <nav>
+      <button class="nav-btn" data-view="home">Home</button>
+      <button class="nav-btn" data-view="requests">My Requests</button>
+    </nav>
+    <button class="primary small" data-view="request">Request a Fix</button>
+  </header>
+
+  <main>
+    <section id="home" class="view active">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">HOME MAINTENANCE, MADE SIMPLE</p>
+          <h1>Something broken?<br><span>We'll help fix it.</span></h1>
+          <p class="hero-text">Tell us what you need. FixMate helps you find a suitable technician without the usual hassle.</p>
+          <div class="hero-actions">
+            <button class="primary" data-view="request">Request a Fix</button>
+            <button class="secondary" data-view="requests">View My Requests</button>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="status-dot"></div>
+          <p class="card-label">FIXMATE PROMISE</p>
+          <h3>Clear. Convenient. Reliable.</h3>
+          <p>One simple request from problem to completed job.</p>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">POPULAR SERVICES</p>
+          <h2>What needs fixing?</h2>
+        </div>
+        <button class="text-btn" data-view="request">See all →</button>
+      </div>
+
+      <div class="service-grid" id="homeServices"></div>
+
+      <section class="how">
+        <div>
+          <p class="eyebrow">HOW IT WORKS</p>
+          <h2>Three steps. No drama.</h2>
+        </div>
+        <div class="steps">
+          <article><span>01</span><h3>Tell us the problem</h3><p>Choose a service and describe what needs attention.</p></article>
+          <article><span>02</span><h3>Get matched</h3><p>FixMate finds a suitable technician for your request.</p></article>
+          <article><span>03</span><h3>Get it fixed</h3><p>Track the job and confirm when the work is complete.</p></article>
+        </div>
+      </section>
+    </section>
+
+    <section id="request" class="view">
+      <div class="page-title">
+        <p class="eyebrow">NEW REQUEST</p>
+        <h1>Tell us what needs fixing.</h1>
+        <p>It takes less than two minutes.</p>
+      </div>
+
+      <form id="requestForm" class="form-card">
+        <label>Your name<input name="name" required placeholder="e.g. Daniel"></label>
+        <label>Phone number<input name="phone" required placeholder="e.g. 07XX XXX XXX"></label>
+        <label>Service
+          <select name="service" id="serviceSelect" required></select>
+        </label>
+        <label>Location<input name="location" required placeholder="Area / estate / building"></label>
+        <label>Describe the problem<textarea name="description" required rows="5" placeholder="What is wrong? Add useful details such as urgency, room, or equipment."></textarea></label>
+        <label>Preferred timing
+          <select name="timing" required>
+            <option value="">Choose timing</option>
+            <option>As soon as possible</option>
+            <option>Today</option>
+            <option>Tomorrow</option>
+            <option>I'll choose later</option>
+          </select>
+        </label>
+        <button class="primary full" type="submit">Find a Technician</button>
+      </form>
+    </section>
+
+    <section id="match" class="view">
+      <div class="page-title">
+        <p class="eyebrow">MATCH FOUND</p>
+        <h1>We've found a technician.</h1>
+        <p>Review the details before confirming the request.</p>
+      </div>
+      <div id="matchCard" class="match-card"></div>
+    </section>
+
+    <section id="requests" class="view">
+      <div class="page-title">
+        <p class="eyebrow">MY REQUESTS</p>
+        <h1>Your FixMate jobs.</h1>
+        <p>Track requests from the moment you ask for help.</p>
+      </div>
+      <div id="requestList"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand"><span class="brand-mark">🔧</span><span>FixMate</span></div>
+    <p>Reliable help, right when you need it.</p>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
