@@ -58,7 +58,7 @@ document.getElementById("signInBtn").addEventListener("click", async () => {
 
   message.textContent = "You are now signed in.";
 });
-   showView("home");
+showView("home");
 const services = [
   {name:"Plumbing", icon:"🚰", desc:"Leaks, taps, toilets, pipes and water issues."},
   {name:"Electrical", icon:"🔌", desc:"Sockets, lights, wiring and electrical faults."},
