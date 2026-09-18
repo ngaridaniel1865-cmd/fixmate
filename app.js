@@ -5,6 +5,59 @@ const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
+document.getElementById("signUpBtn").addEventListener("click", async () => {
+  const name = document.getElementById("authName").value.trim();
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  const message = document.getElementById("authMessage");
+
+  if (!name || !email || !password) {
+    message.textContent = "Please fill in all fields.";
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name
+      }
+    }
+  });
+
+  if (error) {
+    message.textContent = error.message;
+    return;
+  }
+
+  message.textContent = "Account created successfully.";
+});
+
+document.getElementById("signInBtn").addEventListener("click", async () => {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  const message = document.getElementById("authMessage");
+
+  if (!email || !password) {
+    message.textContent = "Please enter your email and password.";
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    message.textContent = error.message;
+    return;
+  }
+
+  message.textContent = "You are now signed in.";
+});
 const services = [
   {name:"Plumbing", icon:"🚰", desc:"Leaks, taps, toilets, pipes and water issues."},
   {name:"Electrical", icon:"🔌", desc:"Sockets, lights, wiring and electrical faults."},
