@@ -1,3 +1,10 @@
+const SUPABASE_URL = "https://dqoxbsoubpsapalfwifh.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Kbptq7udQeaGgqOt7Un3vA_eEm6Iunu";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 const services = [
   {name:"Plumbing", icon:"🚰", desc:"Leaks, taps, toilets, pipes and water issues."},
   {name:"Electrical", icon:"🔌", desc:"Sockets, lights, wiring and electrical faults."},
