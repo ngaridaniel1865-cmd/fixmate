@@ -32,8 +32,7 @@ document.getElementById("signUpBtn").addEventListener("click", async () => {
     return;
   }
 
-  message.textContent = "You are now signed in.";
-showView("home");
+  message.textContent = "Account created successfully.";
 });
 
 document.getElementById("signInBtn").addEventListener("click", async () => {
@@ -58,6 +57,7 @@ document.getElementById("signInBtn").addEventListener("click", async () => {
   }
 
   message.textContent = "You are now signed in.";
+  showView("home");
 });
 const services = [
   {name:"Plumbing", icon:"🚰", desc:"Leaks, taps, toilets, pipes and water issues."},
