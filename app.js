@@ -99,6 +99,18 @@ function showView(id) {
   window.scrollTo({top:0, behavior:"smooth"});
   if (id === "requests") renderRequests();
 }
+async function checkAuth() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (session) {
+    showView("home");
+  } else {
+    showView("auth");
+  }
+}
+
+checkAuth();
+
 
 document.addEventListener("click", e => {
   const btn = e.target.closest("[data-view]");
