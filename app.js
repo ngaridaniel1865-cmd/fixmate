@@ -95,6 +95,7 @@ function renderServices() {
 function showView(id) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById(id).classList.add("active");
+    document.body.classList.toggle("auth-mode", id === "auth");
   window.scrollTo({top:0, behavior:"smooth"});
   if (id === "requests") renderRequests();
 }
