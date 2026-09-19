@@ -32,7 +32,8 @@ document.getElementById("signUpBtn").addEventListener("click", async () => {
     return;
   }
 
-  message.textContent = "Account created successfully.";
+  message.textContent = "You are now signed in.";
+showView("home");
 });
 
 document.getElementById("signInBtn").addEventListener("click", async () => {
