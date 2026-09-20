@@ -157,15 +157,51 @@ document.getElementById("requestForm").addEventListener("submit", async e => {
     return;
   }
 
-  const tech = technicians[data.service] || technicians["General Handyman"];
+  const { data: tech, error: techError } = await supabaseClient
+  .from("technicians")
+  .select(`
+    id,
+    skills,
+    service_areas,
+    available,
+    rating,
+    jobs_completed,
+    users (
+      full_name
+    )
+  `)
+  .contains("skills", [data.service])
+  .eq("available", true)
+  .order("rating", { ascending: false })
+  .limit(1)
+  .single();
 
-  const request = {
-    id: job.id,
-    ...data,
-    technician: tech,
-    status: "Request submitted",
-    created: new Date(job.created_at).toLocaleString()
-  };
+if (techError || !tech) {
+  console.error("Technician matching error:", techError);
+
+  showToast("No available technician found for this service.");
+  return;
+}
+
+const technician = {
+  id: tech.id,
+  name: tech.users.full_name,
+  rating: tech.rating,
+  jobs: tech.jobs_completed,
+  initials: tech.users.full_name
+    .split(" ")
+    .map(name => name[0])
+    .join("")
+    .slice(0, 2)
+};
+
+const request = {
+  id: job.id,
+  ...data,
+  technician,
+  status: "Request submitted",
+  created: new Date(job.created_at).toLocaleString()
+};
 
   requests.unshift(request);
   localStorage.setItem("fixmate_requests", JSON.stringify(requests));
