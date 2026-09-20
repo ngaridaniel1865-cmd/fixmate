@@ -195,6 +195,21 @@ const technician = {
     .slice(0, 2)
 };
 
+const { error: matchError } = await supabaseClient
+  .from("jobs")
+  .update({
+    technician_id: tech.id,
+    status: "matched"
+  })
+  .eq("id", job.id)
+  .eq("customer_id", user.id);
+
+if (matchError) {
+  console.error("Error saving technician match:", matchError);
+  showToast("Technician found, but we couldn't save the match.");
+  return;
+}
+
 const request = {
   id: job.id,
   ...data,
