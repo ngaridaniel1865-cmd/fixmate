@@ -201,28 +201,69 @@ function confirmJob(id) {
   showView("requests");
 }
 
-async  function renderRequests() {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {   const list = document.getElementById("requestsList");    if (!list) return;    list.innerHTML = "<p>Loading your requests...</p>";    const {     data: { user },     error: authError   } = await supabaseClient.auth.getUser();    if (authError || !user) {     list.innerHTML = "<p>Please sign in to view your requests.</p>";     return;   }    const { data: jobs, error } = await supabaseClient     .from("jobs")     .select("*")     .eq("customer_id", user.id)     .order("created_at", { ascending: false });    if (error) {     console.error("Error loading jobs:", error);     list.innerHTML = "<p>We couldn't load your requests.</p>";     return;   }    if (!jobs || jobs.length === 0) {     list.innerHTML = "<p>You have no requests yet.</p>";     return;   }    list.innerHTML = jobs.map(job => `     <div class="request-card">       <h3>${job.service}</h3>        <p><strong>Status:</strong> ${job.status}</p>        <p><strong>Location:</strong> ${job.location}</p>        <p><strong>Description:</strong> ${job.description || "No description provided"}</p>        <p><strong>Request ID:</strong> ${job.id}</p>        <p><strong>Submitted:</strong> ${         new Date(job.created_at).toLocaleString()       }</p>     </div>   `).join(""); } {
+async function renderRequests() {
   const el = document.getElementById("requestList");
-  if (!requests.length) {
-    el.innerHTML = `<div class="empty"><h3>No requests yet.</h3><p>Your FixMate jobs will appear here after you make a request.</p><button class="primary" data-view="request">Request a Fix</button></div>`;
+
+  if (!el) return;
+
+  el.innerHTML = `<div class="empty"><p>Loading your requests...</p></div>`;
+
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    el.innerHTML = `<div class="empty"><h3>Please sign in.</h3></div>`;
     return;
   }
-  el.innerHTML = requests.map(r => `
+
+  const { data: jobs, error } = await supabaseClient
+    .from("jobs")
+    .select("*")
+    .eq("customer_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading jobs:", error);
+    el.innerHTML = `<div class="empty"><h3>We couldn't load your requests.</h3></div>`;
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <h3>No requests yet.</h3>
+        <p>Your FixMate jobs will appear here after you make a request.</p>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = jobs.map(job => `
     <article class="request-item">
-      <div class="request-top"><div><strong>${r.service}</strong><br><small>${r.id} · ${r.created}</small></div><span class="badge">${r.status}</span></div>
-      <p>${escapeHtml(r.description)}</p>
-      <div><small>Technician: <strong>${r.technician.name}</strong></small></div>
-    </article>`).join("");
-}
+      <div class="request-top">
+        <div>
+          <strong>${escapeHtml(job.service)}</strong><br>
+          <small>${job.id}</small>
+        </div>
+        <span class="badge">${escapeHtml(job.status)}</span>
+      </div>
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-}
+      <p>${escapeHtml(job.description || "No description provided.")}</p>
 
-function showToast(message) {
-  const t = document.getElementById("toast");
-  t.textContent = message; t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2600);
+      <div>
+        <small>Location: <strong>${escapeHtml(job.location)}</strong></small>
+      </div>
+
+      <div>
+        <small>
+          Submitted:
+          <strong>${new Date(job.created_at).toLocaleString()}</strong>
+        </small>
+      </div>
+    </article>
+  `).join("");
 }
 
 renderServices();
