@@ -58,17 +58,7 @@ document.getElementById("signInBtn").addEventListener("click", async () => {
 
   message.textContent = "You are now signed in.";
   showView("home");
-  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut();
 
-  if (error) {
-    console.error("Logout error:", error);
-    showToast("Couldn't log out.");
-    return;
-  }
-
-  showView("auth");
-  showToast("You have been logged out.");
 });
 const services = [
   {name:"Plumbing", icon:"🚰", desc:"Leaks, taps, toilets, pipes and water issues."},
