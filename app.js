@@ -191,13 +191,37 @@ function renderMatch(r) {
   `;
 }
 
-function confirmJob(id) {
-  const r = requests.find(x => x.id === id);
-  if (!r) return;
-  r.status = "Confirmed";
-  localStorage.setItem("fixmate_requests", JSON.stringify(requests));
+async function confirmJob(id) {
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    showToast("Please log in again.");
+    showView("auth");
+    return;
+  }
+
+  const { data: job, error } = await supabaseClient
+    .from("jobs")
+    .update({
+      status: "confirmed"
+    })
+    .eq("id", id)
+    .eq("customer_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error confirming request:", error);
+    showToast("We couldn't confirm your request.");
+    return;
+  }
+
   showToast("Request confirmed.");
-  renderRequests();
+
+  await renderRequests();
   showView("requests");
 }
 
