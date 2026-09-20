@@ -363,5 +363,105 @@ function showToast(message) {
   }, 2600);
 }
 
+async function renderTechnicianJobs() {
+  const el = document.getElementById("technicianJobs");
+
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="empty">
+      <p>Loading your jobs...</p>
+    </div>
+  `;
+
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    el.innerHTML = `
+      <div class="empty">
+        <h3>Please sign in.</h3>
+      </div>
+    `;
+    return;
+  }
+
+  const { data: technician, error: technicianError } = await supabaseClient
+    .from("technicians")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (technicianError || !technician) {
+    el.innerHTML = `
+      <div class="empty">
+        <h3>Technician profile not found.</h3>
+      </div>
+    `;
+    return;
+  }
+
+  const { data: jobs, error: jobsError } = await supabaseClient
+    .from("jobs")
+    .select("*")
+    .eq("technician_id", technician.id)
+    .order("created_at", { ascending: false });
+
+  if (jobsError) {
+    console.error("Error loading technician jobs:", jobsError);
+
+    el.innerHTML = `
+      <div class="empty">
+        <h3>We couldn't load your jobs.</h3>
+      </div>
+    `;
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <h3>No assigned jobs yet.</h3>
+        <p>New FixMate jobs assigned to you will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = jobs.map(job => `
+    <article class="request-item">
+      <div class="request-top">
+        <div>
+          <strong>${escapeHtml(job.service)}</strong><br>
+          <small>${job.id}</small>
+        </div>
+
+        <span class="badge">
+          ${escapeHtml(job.status)}
+        </span>
+      </div>
+
+      <p>${escapeHtml(job.description || "No description provided.")}</p>
+
+      <div>
+        <small>
+          Location:
+          <strong>${escapeHtml(job.location)}</strong>
+        </small>
+      </div>
+
+      <div>
+        <small>
+          Submitted:
+          <strong>${new Date(job.created_at).toLocaleString()}</strong>
+        </small>
+      </div>
+    </article>
+  `).join("");
+}
+
 renderServices();
 renderRequests();
+renderTechnicianJobs();
