@@ -123,19 +123,53 @@ function startRequest(service) {
   document.getElementById("serviceSelect").value = service;
 }
 
-document.getElementById("requestForm").addEventListener("submit", e => {
+document.getElementById("requestForm").addEventListener("submit", async e => {
   e.preventDefault();
+
   const data = Object.fromEntries(new FormData(e.target).entries());
+
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    showToast("Please log in before making a request.");
+    showView("auth");
+    return;
+  }
+
+  const { data: job, error } = await supabaseClient
+    .from("jobs")
+    .insert({
+      customer_id: user.id,
+      service: data.service,
+      description: data.description,
+      location: data.location,
+      status: "requested"
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error);
+    showToast("We couldn't submit your request.");
+    return;
+  }
+
   const tech = technicians[data.service] || technicians["General Handyman"];
+
   const request = {
-    id: "FM-" + Date.now().toString().slice(-6),
+    id: job.id,
     ...data,
     technician: tech,
-    status: "Technician matched",
-    created: new Date().toLocaleString()
+    status: "Request submitted",
+    created: new Date(job.created_at).toLocaleString()
   };
+
   requests.unshift(request);
   localStorage.setItem("fixmate_requests", JSON.stringify(requests));
+
   renderMatch(request);
   showView("match");
 });
