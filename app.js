@@ -463,6 +463,19 @@ async function renderTechnicianJobs() {
   `).join("");
 }
 
+document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    console.error("Logout error:", error);
+    showToast("Couldn't log out.");
+    return;
+  }
+
+  showView("auth");
+  showToast("You have been logged out.");
+});
+
 renderServices();
 renderRequests();
 renderTechnicianJobs();
