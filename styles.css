@@ -8,7 +8,7 @@ body.auth-mode #auth {
   min-height: 100vh;
   display: block;
 }
-A
+
 .mobile-logout{
   display:none;
   position:fixed;
@@ -31,3 +31,8 @@ body.auth-mode .mobile-logout{display:none!important}
 @media(min-width:801px){
   .mobile-logout{display:none!important}
 }
+
+/* Role-based visibility: hidden until a role is known, then shown per role */
+.customer-only,.tech-only{display:none}
+body.role-customer .customer-only{display:inline-block}
+body.role-technician .tech-only{display:inline-block}
