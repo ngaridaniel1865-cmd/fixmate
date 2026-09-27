@@ -56,8 +56,8 @@ document.getElementById("signInBtn").addEventListener("click", async () => {
     return;
   }
 
-  message.textContent = "You are now signed in.";
-  showView("home");
+  message.textContent = "";
+  await routeAfterAuth();
 
 });
 const services = [
@@ -100,15 +100,43 @@ function showView(id) {
     document.body.classList.toggle("auth-mode", id === "auth");
   window.scrollTo({top:0, behavior:"smooth"});
   if (id === "requests") renderRequests();
+  if (id === "technician-dashboard") renderTechnicianJobs();
+  if (id === "techHome") renderTechHome();
 }
-async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
 
-  if (session) {
-    showView("home");
-  } else {
+let currentRole = null;
+let technicianRecord = null;
+
+async function routeAfterAuth() {
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  document.body.classList.remove("role-customer", "role-technician");
+
+  if (authError || !user) {
+    currentRole = null;
+    technicianRecord = null;
     showView("auth");
+    return;
   }
+
+  const { data: tech } = await supabaseClient
+    .from("technicians")
+    .select("id, rating, jobs_completed")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  technicianRecord = tech || null;
+  currentRole = tech ? "technician" : "customer";
+  document.body.classList.add(currentRole === "technician" ? "role-technician" : "role-customer");
+
+  showView(currentRole === "technician" ? "techHome" : "home");
+}
+
+async function checkAuth() {
+  await routeAfterAuth();
 }
 
 checkAuth();
@@ -118,6 +146,31 @@ document.addEventListener("click", e => {
   const btn = e.target.closest("[data-view]");
   if (btn) showView(btn.dataset.view);
 });
+
+async function renderTechHome() {
+  const headline = document.getElementById("techStatsHeadline");
+  const sub = document.getElementById("techStatsSub");
+
+  if (!headline || !sub) return;
+
+  if (!technicianRecord) {
+    headline.textContent = "Technician profile not found";
+    sub.textContent = "Contact support to finish setting up your account.";
+    return;
+  }
+
+  headline.textContent = `${technicianRecord.rating ?? "—"} rating · ${technicianRecord.jobs_completed ?? 0} jobs done`;
+
+  const { count, error } = await supabaseClient
+    .from("jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("technician_id", technicianRecord.id)
+    .neq("status", "confirmed");
+
+  sub.textContent = error
+    ? "Assigned Jobs will appear once loaded."
+    : `${count ?? 0} active job${count === 1 ? "" : "s"} waiting on you.`;
+}
 
 function startRequest(service) {
   showView("request");
@@ -463,17 +516,22 @@ async function renderTechnicianJobs() {
   `).join("");
 }
 
-document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut();
+document.querySelectorAll("#logoutBtn, #logoutBtnMobile").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const { error } = await supabaseClient.auth.signOut();
 
-  if (error) {
-    console.error("Logout error:", error);
-    showToast("Couldn't log out.");
-    return;
-  }
+    if (error) {
+      console.error("Logout error:", error);
+      showToast("Couldn't log out.");
+      return;
+    }
 
-  showView("auth");
-  showToast("You have been logged out.");
+    currentRole = null;
+    technicianRecord = null;
+    document.body.classList.remove("role-customer", "role-technician");
+    showView("auth");
+    showToast("You have been logged out.");
+  });
 });
 
 renderServices();
