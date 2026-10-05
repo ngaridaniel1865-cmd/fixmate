@@ -36,3 +36,16 @@ body.auth-mode .mobile-logout{display:none!important}
 .customer-only,.tech-only{display:none}
 body.role-customer .customer-only{display:inline-block}
 body.role-technician .tech-only{display:inline-block}
+
+/* Job workflow actions */
+.job-actions{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid #e8ebe8;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+}
+.request-item .job-note{margin:0;font-size:13px;font-weight:650;color:#61766a}
+.job-actions button[disabled]{opacity:.5;cursor:default;transform:none}

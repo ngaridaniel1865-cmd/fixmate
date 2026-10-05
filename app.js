@@ -143,9 +143,192 @@ checkAuth();
 
 
 document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-view]");
-  if (btn) showView(btn.dataset.view);
+  const navBtn = e.target.closest("[data-view]");
+  if (navBtn) {
+    showView(navBtn.dataset.view);
+    return;
+  }
+
+  const jobBtn = e.target.closest("[data-job-action]");
+  if (jobBtn) handleJobAction(jobBtn);
 });
+
+const STATUS_LABELS = {
+  requested: "Requested",
+  matched: "Matched",
+  confirmed: "Confirmed",
+  in_progress: "In Progress",
+  technician_completed: "Awaiting confirmation",
+  completed: "Completed"
+};
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] ?? status;
+}
+
+const JOB_TRANSITIONS = {
+  start: {
+    from: "confirmed",
+    to: "in_progress",
+    actor: "technician",
+    success: "Job started."
+  },
+  finish: {
+    from: "in_progress",
+    to: "technician_completed",
+    actor: "technician",
+    success: "Marked as complete. Waiting for the customer to confirm."
+  },
+  "confirm-completion": {
+    from: "technician_completed",
+    to: "completed",
+    actor: "customer",
+    success: "Completion confirmed. Job closed."
+  }
+};
+
+async function currentTechnicianId(userId) {
+  if (technicianRecord) return technicianRecord.id;
+
+  const { data } = await supabaseClient
+    .from("technicians")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return data ? data.id : null;
+}
+
+// The `.eq("status", from)` guard makes each transition happen at most once,
+// so a double-click or a second tab cannot advance the same job twice.
+async function handleJobAction(btn) {
+  const transition = JOB_TRANSITIONS[btn.dataset.jobAction];
+  const jobId = btn.dataset.jobId;
+
+  if (!transition || !jobId || btn.disabled) return;
+
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    showToast("Please log in again.");
+    showView("auth");
+    return;
+  }
+
+  const technicianId = transition.actor === "technician"
+    ? await currentTechnicianId(user.id)
+    : null;
+
+  if (transition.actor === "technician" && !technicianId) {
+    showToast("Technician profile not found.");
+    return;
+  }
+
+  btn.disabled = true;
+
+  try {
+    const { data: updated, error } = await supabaseClient
+      .from("jobs")
+      .update({ status: transition.to })
+      .eq("id", jobId)
+      .eq("status", transition.from)
+      .eq(transition.actor === "technician" ? "technician_id" : "customer_id",
+          transition.actor === "technician" ? technicianId : user.id)
+      .select("id, status")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Job status update error:", error);
+      showToast("We couldn't update this job.");
+      return;
+    }
+
+    if (!updated) {
+      await explainUnchangedJob(jobId, transition);
+      return;
+    }
+
+    showToast(transition.success);
+  } finally {
+    btn.disabled = false;
+  }
+
+  await refreshJobViews();
+}
+
+// An update that matched zero rows is either a repeat submission (the job moved
+// on without us) or a write RLS rejected. Distinguish so the toast is truthful.
+async function explainUnchangedJob(jobId, transition) {
+  const { data: current } = await supabaseClient
+    .from("jobs")
+    .select("id, status")
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (current && current.status === transition.from) {
+    showToast("Your account isn't allowed to update this job.");
+  } else {
+    showToast("This job has already been updated.");
+  }
+
+  await refreshJobViews();
+}
+
+async function refreshJobViews() {
+  if (currentRole === "technician") {
+    await renderTechnicianJobs();
+    await renderTechHome();
+    return;
+  }
+
+  await renderRequests();
+}
+
+function jobActionMarkup(job, role) {
+  const id = escapeHtml(job.id);
+
+  if (role === "technician") {
+    if (job.status === "confirmed") {
+      return `
+      <div class="job-actions">
+        <p class="job-note">Ready to start.</p>
+        <button class="primary small" data-job-action="start" data-job-id="${id}">Start Job</button>
+      </div>`;
+    }
+    if (job.status === "in_progress") {
+      return `
+      <div class="job-actions">
+        <p class="job-note">Work is in progress.</p>
+        <button class="primary small" data-job-action="finish" data-job-id="${id}">Mark Work Completed</button>
+      </div>`;
+    }
+    if (job.status === "technician_completed") {
+      return `<div class="job-actions"><p class="job-note">Awaiting customer confirmation.</p></div>`;
+    }
+    if (job.status === "completed") {
+      return `<div class="job-actions"><p class="job-note">Customer confirmed — job closed.</p></div>`;
+    }
+    return "";
+  }
+
+  if (job.status === "in_progress") {
+    return `<div class="job-actions"><p class="job-note">Your technician is working on this.</p></div>`;
+  }
+  if (job.status === "technician_completed") {
+    return `
+      <div class="job-actions">
+        <p class="job-note">The technician marked this work as complete.</p>
+        <button class="primary small" data-job-action="confirm-completion" data-job-id="${id}">Confirm Completion</button>
+      </div>`;
+  }
+  if (job.status === "completed") {
+    return `<div class="job-actions"><p class="job-note">Completed.</p></div>`;
+  }
+  return "";
+}
 
 async function renderTechHome() {
   const headline = document.getElementById("techStatsHeadline");
@@ -159,16 +342,31 @@ async function renderTechHome() {
     return;
   }
 
-  headline.textContent = `${technicianRecord.rating ?? "—"} rating · ${technicianRecord.jobs_completed ?? 0} jobs done`;
-
-  const { count, error } = await supabaseClient
+  const { data: jobs, error } = await supabaseClient
     .from("jobs")
-    .select("id", { count: "exact", head: true })
+    .select("status")
     .eq("technician_id", technicianRecord.id);
 
-  sub.textContent = error
-    ? "Assigned Jobs will appear once loaded."
-    : `${count ?? 0} active job${count === 1 ? "" : "s"} waiting on you.`;
+  if (error) {
+    console.error("Error loading technician stats:", error);
+    headline.textContent = `${technicianRecord.rating ?? "—"} rating`;
+    sub.textContent = "Assigned Jobs will appear once loaded.";
+    return;
+  }
+
+  const active = jobs.filter(j => j.status === "confirmed" || j.status === "in_progress").length;
+  const awaiting = jobs.filter(j => j.status === "technician_completed").length;
+  const completed = jobs.filter(j => j.status === "completed").length;
+
+  // jobs_completed is a stored baseline; jobs closed through the app are
+  // counted here so the total stays correct without writing to `technicians`.
+  const jobsDone = (technicianRecord.jobs_completed ?? 0) + completed;
+
+  headline.textContent = `${technicianRecord.rating ?? "—"} rating · ${jobsDone} jobs done`;
+  sub.textContent = [
+    `${active} active job${active === 1 ? "" : "s"} waiting on you.`,
+    awaiting > 0 ? `${awaiting} awaiting customer confirmation.` : ""
+  ].filter(Boolean).join(" ");
 }
 
 function startRequest(service) {
@@ -375,7 +573,7 @@ async function renderRequests() {
           <strong>${escapeHtml(job.service)}</strong><br>
           <small>${job.id}</small>
         </div>
-        <span class="badge">${escapeHtml(job.status)}</span>
+        <span class="badge">${escapeHtml(statusLabel(job.status))}</span>
       </div>
 
       <p>${escapeHtml(job.description || "No description provided.")}</p>
@@ -390,6 +588,7 @@ async function renderRequests() {
           <strong>${new Date(job.created_at).toLocaleString()}</strong>
         </small>
       </div>
+      ${jobActionMarkup(job, "customer")}
     </article>
   `).join("");
 }
@@ -492,7 +691,7 @@ async function renderTechnicianJobs() {
         </div>
 
         <span class="badge">
-          ${escapeHtml(job.status)}
+          ${escapeHtml(statusLabel(job.status))}
         </span>
       </div>
 
@@ -511,6 +710,7 @@ async function renderTechnicianJobs() {
           <strong>${new Date(job.created_at).toLocaleString()}</strong>
         </small>
       </div>
+      ${jobActionMarkup(job, "technician")}
     </article>
   `).join("");
 }
