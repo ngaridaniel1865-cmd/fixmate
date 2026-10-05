@@ -164,8 +164,7 @@ async function renderTechHome() {
   const { count, error } = await supabaseClient
     .from("jobs")
     .select("id", { count: "exact", head: true })
-    .eq("technician_id", technicianRecord.id)
-    .neq("status", "confirmed");
+    .eq("technician_id", technicianRecord.id);
 
   sub.textContent = error
     ? "Assigned Jobs will appear once loaded."
