@@ -34,6 +34,34 @@ Job status lifecycle:
   publishable (anon) key; privileged database changes are applied from the Supabase dashboard
   SQL editor, never from the browser.
 
+## Database / Reviews & Technician Statistics
+
+Recorded in `supabase/migrations/20261006_reviews_and_canonical_technician_stats.sql`, which has
+already been applied to the live Supabase database and verified there.
+
+- One review per completed job. `public.reviews.job_id` carries a `UNIQUE` constraint
+  (`reviews_job_id_key`), so a job cannot be reviewed twice.
+- Reviews are read-and-create only. Row-level security is enabled on `public.reviews` and
+  `authenticated` is granted `SELECT, INSERT` — no `UPDATE` or `DELETE`. A `FOR SELECT` policy
+  lets any signed-in user read reviews; a `FOR INSERT` policy allows a row only when
+  `customer_id = auth.uid()` and the referenced job belongs to that user, is `completed`, has a
+  technician, and names that same technician. No `FOR UPDATE` or `FOR DELETE` policy exists, so
+  a submitted review cannot be edited or removed through the API.
+- `technicians.rating` is canonical: it is `ROUND(AVG(reviews.rating), 2)` for that technician,
+  never a stored guess. A technician with no reviews keeps `rating` NULL, which the UI renders
+  as "no reviews yet" and orders last.
+- `technicians.jobs_completed` is canonical: it is `COUNT(*)` of that technician's jobs with
+  `status = 'completed'`.
+- Both columns are maintained by `AFTER INSERT OR UPDATE OR DELETE` triggers calling the
+  `SECURITY DEFINER` functions `public.maintain_technician_rating()` and
+  `public.maintain_technician_jobs_completed()`. `SECURITY DEFINER` is required because the
+  triggers run inside a customer's or technician's own statement, and `authenticated` holds no
+  `UPDATE` right on `technicians`. Each function is fixed, fully qualified SQL that recomputes
+  a whole column from source rows (no increments, so it self-heals), pins
+  `search_path = public, pg_temp`, and has `EXECUTE` revoked from `PUBLIC`; it can be reached
+  only as a trigger body.
+- The browser never writes `technicians.rating` or `technicians.jobs_completed`.
+
 ## Important
 This is an MVP/prototype, not a production marketplace. Real deployment will require:
 - user accounts/authentication
