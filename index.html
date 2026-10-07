@@ -145,6 +145,33 @@
       </div>
       <div id="requestList"></div>
     </section>
+
+    <section id="review" class="view">
+      <div class="page-title">
+        <p class="eyebrow">RATE YOUR TECHNICIAN</p>
+        <h1>How did it go?</h1>
+        <p>Your rating updates the technician's profile straight away.</p>
+      </div>
+
+      <form id="reviewForm" class="form-card">
+        <input type="hidden" name="job_id">
+        <input type="hidden" name="technician_id">
+        <label>Your rating
+          <select name="rating" required>
+            <option value="">Choose a rating</option>
+            <option value="5">5 — Excellent</option>
+            <option value="4">4 — Good</option>
+            <option value="3">3 — Okay</option>
+            <option value="2">2 — Poor</option>
+            <option value="1">1 — Very poor</option>
+          </select>
+        </label>
+        <label>Comment (optional)
+          <textarea name="comment" rows="4" maxlength="1000" placeholder="What went well? What could be better?"></textarea>
+        </label>
+        <button class="primary full" type="submit" id="reviewSubmitBtn">Submit Review</button>
+      </form>
+    </section>
     
     <section id="technician-dashboard" class="view">
   <div class="section-head">
@@ -172,6 +199,6 @@
 
   <div id="toast" class="toast"></div>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

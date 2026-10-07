@@ -149,6 +149,12 @@ document.addEventListener("click", e => {
     return;
   }
 
+  const rateBtn = e.target.closest("[data-rate-job]");
+  if (rateBtn) {
+    openReviewForm(rateBtn);
+    return;
+  }
+
   const jobBtn = e.target.closest("[data-job-action]");
   if (jobBtn) handleJobAction(jobBtn);
 });
@@ -164,6 +170,13 @@ const STATUS_LABELS = {
 
 function statusLabel(status) {
   return STATUS_LABELS[status] ?? status;
+}
+
+// technicians.rating is NULL until the first review lands, so it must never be
+// interpolated directly — that would render "null rating".
+function ratingLabel(rating) {
+  if (rating === null || rating === undefined) return "No reviews yet";
+  return `${rating} rating`;
 }
 
 const JOB_TRANSITIONS = {
@@ -289,6 +302,7 @@ async function refreshJobViews() {
 
 function jobActionMarkup(job, role) {
   const id = escapeHtml(job.id);
+  const technicianId = escapeHtml(job.technician_id ?? "");
 
   if (role === "technician") {
     if (job.status === "confirmed") {
@@ -325,9 +339,41 @@ function jobActionMarkup(job, role) {
       </div>`;
   }
   if (job.status === "completed") {
-    return `<div class="job-actions"><p class="job-note">Completed.</p></div>`;
+    const review = jobReview(job);
+
+    if (review) {
+      return `<div class="job-actions"><p class="job-note">You rated this job ${Number(review.rating)}/5.</p></div>`;
+    }
+
+    if (!technicianId) {
+      return `<div class="job-actions"><p class="job-note">Completed.</p></div>`;
+    }
+
+    return `
+      <div class="job-actions">
+        <p class="job-note">Job closed. Let us know how it went.</p>
+        <button class="primary small" data-rate-job data-job-id="${id}" data-technician-id="${technicianId}">Rate Technician</button>
+      </div>`;
   }
   return "";
+}
+
+// UNIQUE(job_id) means the embedded reviews array holds at most one row.
+function jobReview(job) {
+  return Array.isArray(job.reviews) ? job.reviews[0] ?? null : null;
+}
+
+function reviewMarkup(job) {
+  const review = jobReview(job);
+  if (!review) return "";
+
+  const comment = String(review.comment ?? "").trim();
+
+  return `
+      <div class="review">
+        <small>Your rating: <strong>${Number(review.rating)}/5</strong></small>
+        ${comment ? `<p class="review-comment">${escapeHtml(comment)}</p>` : ""}
+      </div>`;
 }
 
 async function renderTechHome() {
@@ -349,20 +395,19 @@ async function renderTechHome() {
 
   if (error) {
     console.error("Error loading technician stats:", error);
-    headline.textContent = `${technicianRecord.rating ?? "—"} rating`;
+    headline.textContent = ratingLabel(technicianRecord.rating);
     sub.textContent = "Assigned Jobs will appear once loaded.";
     return;
   }
 
   const active = jobs.filter(j => j.status === "confirmed" || j.status === "in_progress").length;
   const awaiting = jobs.filter(j => j.status === "technician_completed").length;
-  const completed = jobs.filter(j => j.status === "completed").length;
 
-  // jobs_completed is a stored baseline; jobs closed through the app are
-  // counted here so the total stays correct without writing to `technicians`.
-  const jobsDone = (technicianRecord.jobs_completed ?? 0) + completed;
+  // technicians.jobs_completed is maintained by a database trigger, so it is
+  // already the count of completed jobs — adding a local count double-counts.
+  const jobsDone = technicianRecord.jobs_completed ?? 0;
 
-  headline.textContent = `${technicianRecord.rating ?? "—"} rating · ${jobsDone} jobs done`;
+  headline.textContent = `${ratingLabel(technicianRecord.rating)} · ${jobsDone} jobs done`;
   sub.textContent = [
     `${active} active job${active === 1 ? "" : "s"} waiting on you.`,
     awaiting > 0 ? `${awaiting} awaiting customer confirmation.` : ""
@@ -423,7 +468,7 @@ document.getElementById("requestForm").addEventListener("submit", async e => {
   `)
   .contains("skills", [data.service])
   .eq("available", true)
-  .order("rating", { ascending: false })
+  .order("rating", { ascending: false, nullsFirst: false })
   .limit(1)
   .single();
 
@@ -479,14 +524,14 @@ const request = {
 function renderMatch(r) {
   document.getElementById("matchCard").innerHTML = `
     <div class="technician">
-      <div class="avatar">${r.technician.initials}</div>
-      <div><div class="tech-name">${r.technician.name}</div><div class="verified">✓ Verified technician · ${r.technician.rating} rating · ${r.technician.jobs} jobs</div></div>
+      <div class="avatar">${escapeHtml(r.technician.initials)}</div>
+      <div><div class="tech-name">${escapeHtml(r.technician.name)}</div><div class="verified">✓ Verified technician · ${escapeHtml(ratingLabel(r.technician.rating))} · ${Number(r.technician.jobs ?? 0)} jobs</div></div>
     </div>
     <div class="job-details">
-      <div class="detail"><small>Service</small><strong>${r.service}</strong></div>
+      <div class="detail"><small>Service</small><strong>${escapeHtml(r.service)}</strong></div>
       <div class="detail"><small>Location</small><strong>${escapeHtml(r.location)}</strong></div>
-      <div class="detail"><small>Timing</small><strong>${r.timing}</strong></div>
-      <div class="detail"><small>Request ID</small><strong>${r.id}</strong></div>
+      <div class="detail"><small>Timing</small><strong>${escapeHtml(r.timing)}</strong></div>
+      <div class="detail"><small>Request ID</small><strong>${escapeHtml(r.id)}</strong></div>
     </div>
     <p><strong>Your description</strong><br>${escapeHtml(r.description)}</p>
     <button class="primary full" onclick="confirmJob('${r.id}')">Confirm Request</button>
@@ -527,6 +572,89 @@ async function confirmJob(id) {
   showView("requests");
 }
 
+function openReviewForm(btn) {
+  const jobId = btn.dataset.jobId;
+  const technicianId = btn.dataset.technicianId;
+
+  if (!jobId || !technicianId) {
+    showToast("We couldn't load that job.");
+    return;
+  }
+
+  const form = document.getElementById("reviewForm");
+  form.elements.job_id.value = jobId;
+  form.elements.technician_id.value = technicianId;
+  form.elements.rating.value = "";
+  form.elements.comment.value = "";
+
+  showView("review");
+}
+
+document.getElementById("reviewForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const form = e.target;
+  const submitBtn = document.getElementById("reviewSubmitBtn");
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  const jobId = data.job_id;
+  const technicianId = data.technician_id;
+  const rating = Number(data.rating);
+
+  if (!jobId || !technicianId || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+    showToast("Please choose a rating between 1 and 5.");
+    return;
+  }
+
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    showToast("Please log in again.");
+    showView("auth");
+    return;
+  }
+
+  submitBtn.disabled = true;
+
+  try {
+    // rating and jobs_completed on `technicians` are maintained by database
+    // triggers; the browser only ever inserts the review row.
+    const { error } = await supabaseClient
+      .from("reviews")
+      .insert({
+        job_id: jobId,
+        technician_id: technicianId,
+        customer_id: user.id,
+        rating,
+        comment: String(data.comment ?? "").trim()
+      });
+
+    if (error) {
+      // 23505 = unique_violation on reviews.job_id: one review per job.
+      if (error.code === "23505") {
+        showToast("You've already reviewed this job.");
+        await renderRequests();
+        showView("requests");
+        return;
+      }
+
+      console.error("Review submission error:", error);
+      showToast("We couldn't save your review.");
+      return;
+    }
+
+    showToast("Thanks — your review was saved.");
+  } finally {
+    submitBtn.disabled = false;
+  }
+
+  await renderRequests();
+  showView("requests");
+});
+
 async function renderRequests() {
   const el = document.getElementById("requestList");
 
@@ -546,7 +674,7 @@ async function renderRequests() {
 
   const { data: jobs, error } = await supabaseClient
     .from("jobs")
-    .select("*")
+    .select("*, reviews ( id, rating, comment, created_at )")
     .eq("customer_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -588,6 +716,7 @@ async function renderRequests() {
           <strong>${new Date(job.created_at).toLocaleString()}</strong>
         </small>
       </div>
+      ${reviewMarkup(job)}
       ${jobActionMarkup(job, "customer")}
     </article>
   `).join("");

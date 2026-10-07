@@ -49,3 +49,7 @@ body.role-technician .tech-only{display:inline-block}
 }
 .request-item .job-note{margin:0;font-size:13px;font-weight:650;color:#61766a}
 .job-actions button[disabled]{opacity:.5;cursor:default;transform:none}
+
+/* Customer review display */
+.request-item .review{margin-top:16px;padding-top:16px;border-top:1px solid #e8ebe8}
+.request-item .review-comment{white-space:pre-wrap;margin:8px 0 0;color:#6d776f;line-height:1.5}
