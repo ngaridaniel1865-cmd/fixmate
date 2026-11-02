@@ -107,6 +107,29 @@ function showView(id) {
 let currentRole = null;
 let technicianRecord = null;
 
+async function findTechnicianProfile(userId) {
+  const { data: profiles, error } = await supabaseClient
+    .from("technicians")
+    .select("id, user_id, rating, jobs_completed")
+    .eq("user_id", userId)
+    .limit(2);
+
+  if (error) {
+    console.error("Technician profile lookup error:", error);
+    return { profile: null, issue: "lookup_failed" };
+  }
+
+  if (!profiles || profiles.length === 0) {
+    return { profile: null, issue: "missing" };
+  }
+
+  if (profiles.length > 1) {
+    return { profile: null, issue: "duplicate" };
+  }
+
+  return { profile: profiles[0], issue: null };
+}
+
 async function routeAfterAuth() {
   const {
     data: { user },
@@ -115,26 +138,66 @@ async function routeAfterAuth() {
 
   document.body.classList.remove("role-customer", "role-technician");
 
+  currentRole = null;
+  technicianRecord = null;
+
   if (authError || !user) {
-    currentRole = null;
-    technicianRecord = null;
     showView("auth");
     return;
   }
 
-  const { data: tech } = await supabaseClient
-    .from("technicians")
-    .select("id, rating, jobs_completed")
-    .eq("user_id", user.id)
+  const { data: accountProfile, error: profileError } = await supabaseClient
+    .from("users")
+    .select("account_type")
+    .eq("id", user.id)
     .maybeSingle();
 
-  technicianRecord = tech || null;
-  currentRole = tech ? "technician" : "customer";
-  document.body.classList.add(currentRole === "technician" ? "role-technician" : "role-customer");
+  if (profileError || !accountProfile) {
+    console.error("Account profile lookup error:", profileError);
+    showView("auth");
+    showToast("We couldn't verify your account. Please contact support.");
+    return;
+  }
+
+  if (accountProfile.account_type === "customer") {
+    currentRole = "customer";
+
+  } else if (accountProfile.account_type === "technician") {
+    const result = await findTechnicianProfile(user.id);
+
+    if (result.issue === "missing") {
+      showView("auth");
+      showToast("Technician profile not found. Please contact support.");
+      return;
+    }
+
+    if (result.issue === "duplicate") {
+      showView("auth");
+      showToast("Multiple technician profiles detected. Please contact support.");
+      return;
+    }
+
+    if (result.issue === "lookup_failed") {
+      showView("auth");
+      showToast("We couldn't verify your technician profile.");
+      return;
+    }
+
+    technicianRecord = result.profile;
+    currentRole = "technician";
+
+  } else {
+    showView("auth");
+    showToast("This account type does not have a dashboard yet.");
+    return;
+  }
+
+  document.body.classList.add(
+    currentRole === "technician" ? "role-technician" : "role-customer"
+  );
 
   showView(currentRole === "technician" ? "techHome" : "home");
 }
-
 async function checkAuth() {
   await routeAfterAuth();
 }
@@ -201,15 +264,15 @@ const JOB_TRANSITIONS = {
 };
 
 async function currentTechnicianId(userId) {
-  if (technicianRecord) return technicianRecord.id;
+  if (
+    currentRole !== "technician" ||
+    !technicianRecord ||
+    technicianRecord.user_id !== userId
+  ) {
+    return null;
+  }
 
-  const { data } = await supabaseClient
-    .from("technicians")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  return data ? data.id : null;
+  return technicianRecord.id;
 }
 
 // The `.eq("status", from)` guard makes each transition happen at most once,
@@ -744,6 +807,7 @@ function showToast(message) {
   }, 2600);
 }
 
+
 async function renderTechnicianJobs() {
   const el = document.getElementById("technicianJobs");
 
@@ -769,13 +833,13 @@ async function renderTechnicianJobs() {
     return;
   }
 
-  const { data: technician, error: technicianError } = await supabaseClient
-    .from("technicians")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const technician = technicianRecord;
 
-  if (technicianError || !technician) {
+  if (
+    currentRole !== "technician" ||
+    !technician ||
+    technician.user_id !== user.id
+  ) {
     el.innerHTML = `
       <div class="empty">
         <h3>Technician profile not found.</h3>
@@ -839,6 +903,7 @@ async function renderTechnicianJobs() {
           <strong>${new Date(job.created_at).toLocaleString()}</strong>
         </small>
       </div>
+
       ${jobActionMarkup(job, "technician")}
     </article>
   `).join("");
