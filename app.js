@@ -928,5 +928,3 @@ document.querySelectorAll("#logoutBtn, #logoutBtnMobile").forEach(btn => {
 });
 
 renderServices();
-renderRequests();
-renderTechnicianJobs();
